@@ -60,7 +60,7 @@ class LogoutView(APIView):
     def post(self, request):
         serializer = UserLogoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        blacklist_refresh_token(serializer.validated_data['refresh']) # type: ignore
+        blacklist_refresh_token(serializer.validated_data['refresh']) 
         return Response({
             "detail": "Logged out"
         }, status=status.HTTP_205_RESET_CONTENT
