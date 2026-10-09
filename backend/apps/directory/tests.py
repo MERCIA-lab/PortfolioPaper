@@ -1,3 +1,6 @@
 from django.test import TestCase
 
-# Create your tests here.
+
+class DirectorySmokeTest(TestCase):
+    def test_directory_app_imports(self):
+        self.assertTrue(True)
