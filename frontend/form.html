@@ -1,5 +1,81 @@
 <!doctype html>
 <html lang="en">
-  <head><meta charset="UTF-8"><title>CV Form</title></head>
-  <body><h1>CV Form</h1></body>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create your portfolio — Portfolio Paper</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="config.js"></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body data-page="create-portfolio">
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="wordmark" href="index.html">PORTFOLIO PAPER</a>
+        <nav class="desktop-nav" aria-label="Main navigation"><a href="directory.html">Explore portfolios</a></nav>
+        <div class="header-actions"><a class="text-link" href="directory.html">Explore portfolios</a><button class="button button-outline" type="button" data-logout>Sign out</button></div>
+      </header>
+      <main class="page-main">
+        <h1 class="page-title">Create your portfolio.</h1>
+        <p class="page-intro">Add the details you want to share. Your skills are also used as searchable tags in the portfolio directory.</p>
+        <p class="notice" data-current-user aria-live="polite"></p>
+        <form class="form-panel" data-portfolio-form hidden>
+          <div class="form-grid">
+            <section class="form-section">
+              <h2>Personal information</h2>
+              <div class="form-grid">
+                <label class="field"><span>Full name</span><input name="full_name" required maxlength="150" autocomplete="name"></label>
+                <label class="field"><span>Professional title</span><input name="job_title" maxlength="150" placeholder="For example, Software Engineer"></label>
+                <label class="field"><span>Contact email</span><input type="email" name="email" autocomplete="email"></label>
+                <label class="field"><span>Phone</span><input type="tel" name="phone" autocomplete="tel"></label>
+                <label class="field full"><span>Location</span><input name="location" autocomplete="address-level2"></label>
+                <label class="field full"><span>GitHub profile URL</span><input type="url" name="github" placeholder="https://github.com/your-name"></label>
+                <label class="field full"><span>Profile photo</span>
+                  <span class="photo-upload">
+                    <span class="photo-preview"><img alt="" hidden><span class="photo-preview-label">Photo preview</span></span>
+                    <input type="file" name="photo" accept="image/*">
+                  </span>
+                  <small class="field-hint">Choose a portrait image to show in the top-right of your public portfolio.</small>
+                </label>
+                <label class="field full"><span>Professional summary</span><textarea name="summary" rows="5" placeholder="Introduce your background, strengths and the work you want to do."></textarea></label>
+                <label class="field full"><span>GitHub activity and highlights</span><textarea name="github_summary" rows="3" placeholder="Optional: notable repositories, contributions or technical communities."></textarea></label>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <h2>Work experience</h2>
+              <div class="repeat-list" data-repeat="experience"></div>
+              <button class="add-item" type="button" data-add-item="experience">Add experience</button>
+            </section>
+            <section class="form-section">
+              <h2>Featured projects</h2>
+              <div class="repeat-list" data-repeat="projects"></div>
+              <button class="add-item" type="button" data-add-item="projects">Add project</button>
+            </section>
+            <section class="form-section">
+              <h2>Education</h2>
+              <div class="repeat-list" data-repeat="education"></div>
+              <button class="add-item" type="button" data-add-item="education">Add education</button>
+            </section>
+            <section class="form-section">
+              <h2>Skills and searchable tags</h2>
+              <p class="field-hint">Add skills people may use to find your portfolio, such as Python, design or project management.</p>
+              <div class="repeat-list" data-repeat="skills"></div>
+              <button class="add-item" type="button" data-add-item="skills">Add skill or tag</button>
+            </section>
+            <section class="form-section">
+              <h2>Publishing</h2>
+              <div class="checkbox-field">
+                <input id="is-public" type="checkbox" name="is_public">
+                <label for="is-public">Publish my portfolio in the public directory. Leave unchecked to keep it private.</label>
+              </div>
+            </section>
+          </div>
+          <p class="form-error" aria-live="polite"></p>
+          <div class="form-actions"><button class="button button-dark" type="submit">Save portfolio</button><a class="button button-outline" href="directory.html">Cancel</a></div>
+        </form>
+      </main>
+      <footer class="site-footer"><a class="wordmark" href="index.html">PORTFOLIO PAPER</a><span>© 2026 Portfolio Paper</span></footer>
+    </div>
+  </body>
 </html>
