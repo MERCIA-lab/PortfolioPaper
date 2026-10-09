@@ -1,11 +1,11 @@
-from django.contrib.auth import authenticate, login, logout
+
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import UserCreateSerializer, UserSerializer
-from .services import user_create
+from .serializers import UserCreateSerializer, UserLoginSerializer, UserLogoutSerializer, UserSerializer
+from .services import blacklist_refresh_token, login_user_and_get_tokens
 
 
 class RegisterView(APIView):
@@ -22,26 +22,41 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        email = request.data.get('email')
-        password = request.data.get('password')
-
-        if not email or not password:
-            return Response({'detail': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        user = authenticate(request, email=email, password=password)
-        if user is None:
-            return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        login(request, user)
-        return Response(UserSerializer(user).data)
+        serializer = UserLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user, tokens = login_user_and_get_tokens(**serializer.validated_data) # type: ignore
+        response = Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+        response.set_cookie(
+            key='access_token',
+            value=tokens['access'],
+            httponly=True,
+            secure=True,
+            samesite='None',
+        )
+        response.set_cookie(
+            key='refresh_token',
+            value=tokens['refresh'],
+            httponly=True,
+            secure=True,
+            samesite='None',
+        )
+        return Response({
+            "user": UserSerializer(user).data,
+            **tokens
+        })
 
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        logout(request)
-        return Response({'detail': 'Logged out successfully.'})
+        serializer = UserLogoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        blacklist_refresh_token(serializer.validated_data['refresh']) # type: ignore
+        return Response({
+            "detail": "Logged out"
+        }, status=status.HTTP_205_RESET_CONTENT
+        )
 
 
 class UserView(APIView):
