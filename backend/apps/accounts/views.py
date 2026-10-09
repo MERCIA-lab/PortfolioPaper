@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import UserCreateSerializer, UserLoginSerializer, UserLogoutSerializer, UserSerializer
-from .services import blacklist_refresh_token, login_user_and_get_tokens
+from .services import blacklist_refresh_token,login_and_get_tokens, create_user_and_get_tokens
 
 
 class RegisterView(APIView):
@@ -14,8 +14,14 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = UserCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = user_create(**serializer.validated_data)
-        return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+
+        result = create_user_and_get_tokens(**serializer.validated_data)
+
+        return Response({
+            "user": UserSerializer(result["user"]).data,
+            "access": result["access"],
+            "refresh": result["refresh"]
+        }, status=status.HTTP_201_CREATED)
 
 
 class LoginView(APIView):
@@ -24,26 +30,28 @@ class LoginView(APIView):
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user, tokens = login_user_and_get_tokens(**serializer.validated_data) # type: ignore
-        response = Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+        result = login_and_get_tokens(**serializer.validated_data)
+        user = result["user"]
+        response = Response({
+            "user": UserSerializer(user).data,
+            "access": result["access"],
+            "refresh": result["refresh"],
+        }, status=status.HTTP_200_OK)
         response.set_cookie(
             key='access_token',
-            value=tokens['access'],
+            value=result['access'],
             httponly=True,
             secure=True,
             samesite='None',
         )
         response.set_cookie(
             key='refresh_token',
-            value=tokens['refresh'],
+            value=result['refresh'],
             httponly=True,
             secure=True,
             samesite='None',
         )
-        return Response({
-            "user": UserSerializer(user).data,
-            **tokens
-        })
+        return response
 
 
 class LogoutView(APIView):

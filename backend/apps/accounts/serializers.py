@@ -1,7 +1,5 @@
 from rest_framework import serializers
-
-from .models import User
-
+from.models import User
 
 class UserCreateSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -13,16 +11,14 @@ class UserCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError('Email already exists')
         return value
 
-
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True, min_length=8)
+    password = serializers.CharField(write_only=True)
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'username', 'is_active', 'created_at', 'date_joined']
-
 
 class UserLogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()

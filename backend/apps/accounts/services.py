@@ -3,23 +3,33 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
 from .selectors import get_user_by_id,get_user_by_email
 
-def create_user_and_get_tokens(validated_data):
-    from .models import User
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+from.models import User
 
-    user = User.objects.create_user( # type: ignore
-        username=validated_data['username'],
-        email=validated_data['email'],
-        password=validated_data['password']
+def create_user_and_get_tokens(*, email: str, username: str, password: str):
+    user = User.objects.create_user(
+        email=email,
+        username=username,
+        password=password
     )
-    return user, get_tokens_for_user(user)
+    refresh = RefreshToken.for_user(user)
+    return {
+        "user": user,
+        "access": str(refresh.access_token),
+        "refresh": str(refresh)
+    }
 
-def login_user_and_get_tokens(email, password):
+def login_and_get_tokens(*, email: str, password: str):
     user = authenticate(email=email, password=password)
     if not user:
-        if not get_user_by_email(email=email):
-            raise AuthenticationFailed('User not found')
-        raise AuthenticationFailed('Incorrect password')
-    return user, get_tokens_for_user(user)
+        raise ValueError("Invalid credentials")
+    refresh = RefreshToken.for_user(user)
+    return {
+        "user": user,
+        "access": str(refresh.access_token),
+        "refresh": str(refresh)
+    }
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
