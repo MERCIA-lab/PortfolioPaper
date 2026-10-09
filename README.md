@@ -36,16 +36,47 @@ portfolio_paper/
 │       └── wsgi.py
 ├── frontend/                              (plain HTML, CSS, JS)
 │   ├── index.html
+│   ├── style.css
+│   ├── app.js
+│   ├── config.js
 │   ├── login.html
 │   ├── register.html
 │   ├── form.html
-│   └── directory.html
+│   ├── directory.html
+│   └── portfolio.html
 ├── README.md
 ├── .gitignore
 ├── LICENSE
 ├── .env
 └── .github/
 ```
+
+## Run locally
+
+The frontend is plain HTML, CSS and JavaScript. Its API base URL is set in `frontend/config.js`.
+The pages expect the Django API from the `backend` branch at `http://localhost:8000/api`.
+
+Run the backend from a backend-branch checkout:
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver 8000
+```
+
+Run the frontend from the `Front-End` branch in a second terminal:
+
+```bash
+git switch Front-End
+python3 -m http.server 5500 --directory frontend
+```
+
+Open `http://localhost:5500`. The development API allows this origin for session authentication, photo uploads, and CSRF protection.
+
+The sign-in and registration pages use the accounts API. Portfolio details and photos are stored by the backend; only public portfolios appear in the searchable directory, and skills are used as directory tags.
 
 ## 2. 3 Layers
 
