@@ -34,3 +34,13 @@ if DATABASES['default']['ENGINE'] == "django.db.backends.sqlite3":
     database_name = Path(DATABASES['default']['NAME'])
     if not database_name.is_absolute():
         DATABASES['default']['NAME'] = str(BASE_DIR / database_name)
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_PORT = 465
+EMAIL_HOST_USER = os.getenv('ACCOUNT')
+EMAIL_HOST_PASSWORD = os.getenv('PASSWORD')
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
