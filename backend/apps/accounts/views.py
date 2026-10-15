@@ -41,15 +41,15 @@ class LoginView(APIView):
             key='access_token',
             value=result['access'],
             httponly=True,
-            secure=True,
-            samesite='None',
+            secure=request.is_secure(),
+            samesite='Lax',
         )
         response.set_cookie(
             key='refresh_token',
             value=result['refresh'],
             httponly=True,
-            secure=True,
-            samesite='None',
+            secure=request.is_secure(),
+            samesite='Lax',
         )
         return response
 
@@ -60,11 +60,14 @@ class LogoutView(APIView):
     def post(self, request):
         serializer = UserLogoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        blacklist_refresh_token(serializer.validated_data['refresh']) 
-        return Response({
+        blacklist_refresh_token(serializer.validated_data['refresh'])
+        response = Response({
             "detail": "Logged out"
         }, status=status.HTTP_205_RESET_CONTENT
         )
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
+        return response
 
 
 class UserView(APIView):

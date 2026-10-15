@@ -1,5 +1,4 @@
 from .base import * 
-from os import environ as env
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -9,6 +8,15 @@ DEBUG = True
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / ".env")
+
+STATIC_ROOT = BASE_DIR / "static"
+MEDIA_ROOT = BASE_DIR / "media"
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+]
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 
 DATABASES = {
@@ -21,3 +29,8 @@ DATABASES = {
         'PORT': os.getenv("DB_PORT", ""),
     }
 }
+
+if DATABASES['default']['ENGINE'] == "django.db.backends.sqlite3":
+    database_name = Path(DATABASES['default']['NAME'])
+    if not database_name.is_absolute():
+        DATABASES['default']['NAME'] = str(BASE_DIR / database_name)

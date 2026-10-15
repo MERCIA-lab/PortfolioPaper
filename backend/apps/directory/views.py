@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.portfolio.models import Portfolio
-from apps.portfolio.serializers import PortfolioPublicSerializer, PortfolioSerializer
+from apps.portfolio.serializers import PortfolioPublicSerializer
 
 
 class DirectoryView(APIView):
@@ -15,4 +15,4 @@ class DirectoryView(APIView):
 class PortfolioPublicView(APIView):
     def get(self, request, slug):
         portfolio = get_object_or_404(Portfolio.objects.filter(is_public=True), slug=slug)
-        return Response(PortfolioSerializer(portfolio).data)
+        return Response(PortfolioPublicSerializer(portfolio).data)
