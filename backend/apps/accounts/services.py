@@ -1,11 +1,9 @@
 from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
-from .selectors import get_user_by_id,get_user_by_email
-
-from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from.models import User
+from rest_framework_simplejwt.exceptions import TokenError
+
+from .models import User
 
 def create_user_and_get_tokens(*, email: str, username: str, password: str):
     user = User.objects.create_user(
@@ -23,7 +21,7 @@ def create_user_and_get_tokens(*, email: str, username: str, password: str):
 def login_and_get_tokens(*, email: str, password: str):
     user = authenticate(email=email, password=password)
     if not user:
-        raise ValueError("Invalid credentials")
+        raise AuthenticationFailed("Invalid credentials")
     refresh = RefreshToken.for_user(user)
     return {
         "user": user,
@@ -40,8 +38,8 @@ def get_tokens_for_user(user):
 
 def blacklist_refresh_token(refresh_token:str):
     try:
-        token = RefreshToken(refresh_token_str=refresh_token) # type: ignore
+        token = RefreshToken(refresh_token)
         token.blacklist()
         return True
-    except Exception as e:
+    except TokenError as exc:
         raise AuthenticationFailed('Invalid token')
