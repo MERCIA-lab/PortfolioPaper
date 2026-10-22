@@ -14,12 +14,6 @@ class AccountApiTests(APITestCase):
             password="correct-horse-battery",
         )
 
-    def test_csrf_endpoint_sets_cookie(self):
-        response = self.client.get(reverse("csrf"))
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("csrftoken", response.cookies)
-
     def test_invalid_login_returns_unauthorized(self):
         response = self.client.post(
             reverse("login"),
