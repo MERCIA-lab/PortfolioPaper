@@ -1,8 +1,10 @@
 import logging
 
 from django.conf import settings
+from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.core.mail import send_mail
+from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -10,6 +12,15 @@ from rest_framework.views import APIView
 
 from.serializers import UserCreateSerializer, UserLoginSerializer, UserLogoutSerializer, UserSerializer
 from.services import blacklist_refresh_token, login_and_get_tokens, create_user_and_get_tokens
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class CsrfTokenView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({"detail": "CSRF cookie set."})
+
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
