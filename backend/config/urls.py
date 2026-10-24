@@ -1,10 +1,26 @@
 from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
-from django.urls import include, path
+from django.http import JsonResponse
+from django.urls import include, path, reverse
+
+
+def api_root(request):
+    return JsonResponse({
+        'accounts': {
+            'register': reverse('register'),
+            'login': reverse('login'),
+            'logout': reverse('logout'),
+            'user': reverse('user'),
+            'refresh': reverse('auth-refresh'),
+        },
+        'portfolio': reverse('portfolio-own'),
+        'directory': reverse('directory'),
+    })
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', api_root, name='api-root'),
     path('api/accounts/', include('apps.accounts.urls')),
     path('api/portfolio/', include('apps.portfolio.urls')),
     path('api/directory/', include('apps.directory.urls')),

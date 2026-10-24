@@ -24,7 +24,7 @@ class SkillSerializer(serializers.ModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ['id', 'title', 'description', 'link']
+        fields = ['id', 'title', 'category', 'technologies', 'description', 'link']
 
 
 class PortfolioSerializer(serializers.ModelSerializer):
@@ -35,14 +35,27 @@ class PortfolioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Portfolio
-        fields = ['id', 'full_name', 'job_title', 'summary', 'phone', 'email', 'location', 'photo', 'slug', 'is_public', 'created_at', 'education', 'experience', 'skills', 'projects']
+        fields = ['id', 'full_name', 'job_title', 'summary', 'phone', 'email', 'location', 'github', 'github_summary', 'photo', 'slug', 'is_public', 'created_at', 'education', 'experience', 'skills', 'projects']
         read_only_fields = ['id', 'slug', 'created_at']
 
 
-class PortfolioPublicSerializer(serializers.ModelSerializer):
+class PortfolioDirectorySerializer(serializers.ModelSerializer):
+    skills = SkillSerializer(many=True, read_only=True)
+
     class Meta:
         model = Portfolio
-        fields = ['full_name', 'job_title', 'summary', 'location', 'photo', 'slug']
+        fields = ['full_name', 'job_title', 'location', 'photo', 'slug', 'skills']
+
+
+class PortfolioPublicSerializer(serializers.ModelSerializer):
+    education = EducationSerializer(many=True, read_only=True)
+    experience = ExperienceSerializer(many=True, read_only=True)
+    skills = SkillSerializer(many=True, read_only=True)
+    projects = ProjectSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Portfolio
+        fields = ['full_name', 'job_title', 'summary', 'phone', 'email', 'location', 'github', 'github_summary', 'photo', 'slug', 'education', 'experience', 'skills', 'projects']
 
 
 class PortfolioWriteSerializer(serializers.ModelSerializer):
@@ -53,7 +66,7 @@ class PortfolioWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Portfolio
-        fields = ['full_name', 'job_title', 'summary', 'phone', 'email', 'location', 'photo', 'is_public', 'education', 'experience', 'skills', 'projects']
+        fields = ['full_name', 'job_title', 'summary', 'phone', 'email', 'location', 'github', 'github_summary', 'photo', 'is_public', 'education', 'experience', 'skills', 'projects']
 
     def update(self, instance, validated_data):
         nested_fields = ['education', 'experience', 'skills', 'projects']

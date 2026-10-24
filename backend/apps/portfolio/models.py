@@ -14,6 +14,8 @@ class Portfolio(models.Model):
     phone = models.CharField(max_length=30, blank=True)
     email = models.EmailField(blank=True)
     location = models.CharField(max_length=150, blank=True)
+    github = models.URLField(blank=True)
+    github_summary = models.TextField(blank=True)
     photo = models.ImageField(upload_to='portfolio/photos/', blank=True, null=True)
     slug = models.SlugField(max_length=200, unique=True, blank=True)
     is_public = models.BooleanField(default=False)
@@ -69,6 +71,8 @@ class Skill(models.Model):
 class Project(models.Model):
     portfolio = models.ForeignKey(Portfolio, related_name='projects', on_delete=models.CASCADE)
     title = models.CharField(max_length=150)
+    category = models.CharField(max_length=120, blank=True)
+    technologies = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True)
     link = models.URLField(blank=True)
 

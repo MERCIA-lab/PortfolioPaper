@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run PortfolioPaper (frontend + backend)",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				".vscode\\run-system.ps1"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

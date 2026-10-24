@@ -3,6 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Create and manage your Portfolio Paper profile, experience, projects and skills.">
+    <meta name="theme-color" content="#ffffff">
     <title>Create your portfolio — Portfolio Paper</title>
     <link rel="stylesheet" href="style.css">
     <script src="config.js"></script>
@@ -11,15 +13,23 @@
   <body data-page="create-portfolio">
     <div class="site-shell">
       <header class="site-header">
-        <a class="wordmark" href="index.html">PORTFOLIO PAPER</a>
+        <a class="wordmark" href="index.html" aria-label="Portfolio Paper home">PORTFOLIO PAPER</a>
         <nav class="desktop-nav" aria-label="Main navigation"><a href="directory.html">Explore portfolios</a></nav>
-        <div class="header-actions"><a class="text-link" href="directory.html">Explore portfolios</a><button class="button button-outline" type="button" data-logout>Sign out</button></div>
+        <div class="header-actions">
+          <a class="text-link" href="directory.html">Explore portfolios</a>
+          <button class="button button-outline" type="button" data-logout hidden>Sign out</button>
+          <button class="menu-toggle icon-button" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span></button>
+        </div>
+        <nav class="mobile-nav" aria-label="Mobile navigation" hidden>
+          <a href="directory.html">Explore portfolios</a>
+          <a href="index.html">Home</a>
+        </nav>
       </header>
       <main class="page-main">
-        <h1 class="page-title">Create your portfolio.</h1>
+        <h1 class="page-title" id="page-title">Create your portfolio.</h1>
         <p class="page-intro">Add the details you want to share. Your skills are also used as searchable tags in the portfolio directory.</p>
         <p class="notice" data-current-user aria-live="polite"></p>
-        <form class="form-panel" data-portfolio-form hidden>
+        <form class="form-panel" data-portfolio-form aria-labelledby="page-title" hidden>
           <div class="form-grid">
             <section class="form-section">
               <h2>Personal information</h2>

@@ -36,13 +36,15 @@ async function apiRequest(path, options = {}) {
     credentials: "include",
   });
   const contentType = response.headers.get("content-type") || "";
-  const payload = contentType.includes("application/json")
-    ? await response.json()
-    : await response.text();
+  const payload = [204, 205].includes(response.status)
+    ? null
+    : contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
   if (!response.ok) {
     const detail = typeof payload === "string"
       ? payload
-      : payload.detail || Object.entries(payload).map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : value}`).join(" ");
+      : payload?.detail || Object.entries(payload || {}).map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : value}`).join(" ");
     const error = new Error(detail || `Request failed (${response.status}).`);
     error.status = response.status;
     throw error;
@@ -53,6 +55,55 @@ async function apiRequest(path, options = {}) {
 function showStatus(element, message, isError = false) {
   element.textContent = message;
   element.classList.toggle("is-error", isError);
+}
+
+function setupAccountNavigation() {
+  const headerActions = document.querySelector(".header-actions");
+  if (!headerActions) return;
+
+  let button = headerActions.querySelector("[data-logout]");
+  if (!button) {
+    button = document.createElement("button");
+    button.className = "button button-outline";
+    button.type = "button";
+    button.dataset.logout = "";
+    button.textContent = "Sign out";
+    headerActions.append(button);
+  }
+  button.hidden = true;
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    try {
+      await apiRequest("accounts/logout/", { method: "POST", body: {} });
+      location.href = "login.html?signed_out=1";
+    } catch (error) {
+      button.disabled = false;
+      let status = document.querySelector(".form-error, [data-status]");
+      if (!status) {
+        status = document.createElement("p");
+        status.className = "notice";
+        status.setAttribute("aria-live", "polite");
+        document.querySelector("main")?.prepend(status);
+      }
+      showStatus(status, `Could not sign out: ${error.message}`, true);
+    }
+  });
+
+  apiRequest("accounts/user/")
+    .then(() => {
+      button.hidden = false;
+      document.querySelectorAll('.site-header a[href="login.html"], .site-header a[href="register.html"]').forEach((link) => {
+        link.hidden = true;
+      });
+      document.querySelectorAll('.site-header a[href="form.html"]').forEach((link) => {
+        link.textContent = "My portfolio";
+      });
+    })
+    .catch((error) => {
+      if (![401, 403].includes(error.status)) {
+        console.error("Could not check the signed-in account.", error);
+      }
+    });
 }
 
 function escapeText(value) {
@@ -129,6 +180,60 @@ function createPortfolioCard(portfolio) {
   return link;
 }
 
+function createFeaturedPortfolio(portfolio, index) {
+  const link = document.createElement("a");
+  link.className = `hero-featured-card${index === 0 ? " hero-featured-card-primary" : ""}`;
+  link.href = portfolioHref(portfolio);
+  link.setAttribute("aria-label", `View ${escapeText(portfolio.full_name)}'s complete portfolio`);
+
+  const imagePath = photoUrl(portfolio.photo);
+  if (imagePath) {
+    const image = document.createElement("img");
+    image.className = "hero-featured-photo";
+    image.src = imagePath;
+    image.alt = "";
+    image.loading = index === 0 ? "eager" : "lazy";
+    link.append(image);
+  } else {
+    const placeholder = document.createElement("span");
+    placeholder.className = "hero-featured-initials";
+    placeholder.textContent = initials(portfolio.full_name);
+    link.append(placeholder);
+  }
+
+  const info = document.createElement("span");
+  info.className = "hero-featured-info";
+  const name = document.createElement("strong");
+  name.textContent = escapeText(portfolio.full_name);
+  const role = document.createElement("span");
+  role.textContent = escapeText(portfolio.job_title || "Portfolio");
+  info.append(name, role);
+  if (portfolio.location) {
+    const location = document.createElement("small");
+    location.textContent = escapeText(portfolio.location);
+    info.append(location);
+  }
+  link.append(info);
+  return link;
+}
+
+function renderFeaturedPortfolios(container, portfolios) {
+  if (!container) return;
+  if (!portfolios.length) {
+    const message = document.createElement("p");
+    message.className = "hero-showcase-status";
+    message.setAttribute("role", "status");
+    message.textContent = "No public portfolios yet. Be the first to share yours.";
+    const link = document.createElement("a");
+    link.className = "button button-dark";
+    link.href = "form.html";
+    link.textContent = "Create your portfolio";
+    container.replaceChildren(message, link);
+    return;
+  }
+  container.replaceChildren(...portfolios.slice(0, 3).map(createFeaturedPortfolio));
+}
+
 async function getPublicPortfolios() {
   const result = await apiRequest("directory/");
   const list = Array.isArray(result) ? result : result.results;
@@ -159,6 +264,7 @@ function setupDirectory(root = document) {
 
   const status = root.querySelector("[data-status]");
   const filters = root.querySelector(".tag-filters");
+  const featured = root.querySelector("[data-featured-portfolios]");
   const searchForm = root.querySelector(".directory-search");
   const searchInput = searchForm?.querySelector('input[type="search"]');
   let portfolios = [];
@@ -211,10 +317,20 @@ function setupDirectory(root = document) {
   getPublicPortfolios()
     .then((results) => {
       portfolios = results;
+      renderFeaturedPortfolios(featured, portfolios);
       setFilters();
       render();
     })
-    .catch((error) => showStatus(status, `Could not load portfolios: ${error.message}`, true));
+    .catch((error) => {
+      showStatus(status, `Could not load portfolios: ${error.message}`, true);
+      if (featured) {
+        const message = document.createElement("p");
+        message.className = "hero-showcase-status is-error";
+        message.setAttribute("role", "status");
+        message.textContent = "Featured portfolios are temporarily unavailable.";
+        featured.replaceChildren(message);
+      }
+    });
 }
 
 function setupAuthForm() {
@@ -251,6 +367,9 @@ function setupAuthForm() {
 
   if (form.dataset.authForm === "login" && new URLSearchParams(location.search).has("registered")) {
     showStatus(status, "Your account is ready. Sign in to continue.");
+  }
+  if (form.dataset.authForm === "login" && new URLSearchParams(location.search).has("signed_out")) {
+    showStatus(status, "You’re signed out. Sign in again whenever you’re ready.");
   }
 }
 
@@ -373,7 +492,7 @@ function setupPortfolioForm() {
   apiRequest("accounts/user/")
     .then(async (user) => {
       accountStatus.textContent = `Signed in as ${user.email}`;
-      try {
+      try { 
         const portfolio = await apiRequest("portfolio/");
         ["full_name", "job_title", "summary", "phone", "email", "location", "github", "github_summary"].forEach((name) => {
           form.elements[name].value = portfolio[name] || "";
@@ -606,19 +725,9 @@ async function setupProfilePage() {
 }
 
 setupMobileMenu();
+setupAccountNavigation();
 setupDirectory();
 setupAuthForm();
 setupPortfolioForm();
 if (document.body.dataset.page === "profile") setupProfilePage();
 document.querySelector("[data-print]")?.addEventListener("click", () => window.print());
-document.querySelector("[data-logout]")?.addEventListener("click", async () => {
-  const button = document.querySelector("[data-logout]");
-  button.disabled = true;
-  try {
-    await apiRequest("accounts/logout/", { method: "POST", body: {} });
-    location.href = "index.html";
-  } catch (error) {
-    button.disabled = false;
-    showStatus(document.querySelector(".form-error"), error.message, true);
-  }
-});

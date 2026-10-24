@@ -1,0 +1,33 @@
+{
+  "extensions": {
+    "devdesk.simple": {
+      "defaultViews": [
+        "files",
+        "overview",
+        "outline",
+        "graph"
+      ],
+      "profile": "software"
+    }
+  },
+  "format": "devdesk.workspace",
+  "knowledge": {
+    "okf": "detect",
+    "roots": [
+      "."
+    ]
+  },
+  "name": "Ko Learning System",
+  "projectId": "06b8725c-7c96-4496-b63a-2004d92e59c7",
+  "root": ".",
+  "schemaVersion": 1,
+  "starterProfile": "software",
+  "tools": {
+    "developer": {
+      "enabled": true
+    },
+    "markdown": {
+      "enabled": true
+    }
+  }
+}

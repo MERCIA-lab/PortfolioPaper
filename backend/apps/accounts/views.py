@@ -1,15 +1,24 @@
 import logging
 
 from django.conf import settings
+from django.middleware.csrf import get_token
 from django.utils import timezone
 from django.core.mail import send_mail
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from.serializers import UserCreateSerializer, UserLoginSerializer, UserLogoutSerializer, UserSerializer
 from.services import blacklist_refresh_token, login_and_get_tokens, create_user_and_get_tokens
+
+class CsrfTokenView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({"csrfToken": get_token(request)})
+
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -60,13 +69,20 @@ class LoginView(APIView):
         return response
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = UserLogoutSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        blacklist_refresh_token(serializer.validated_data['refresh'])
-        response = Response({"detail": "Logged out"}, status=status.HTTP_205_RESET_CONTENT)
+        refresh_token = request.COOKIES.get('refresh_token')
+        if not refresh_token and request.data:
+            serializer = UserLogoutSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            refresh_token = serializer.validated_data['refresh']
+        if refresh_token:
+            try:
+                blacklist_refresh_token(refresh_token)
+            except AuthenticationFailed:
+                logging.info("Refresh token could not be blacklisted during logout.")
+        response = Response(status=status.HTTP_205_RESET_CONTENT)
         response.delete_cookie('access_token')
         response.delete_cookie('refresh_token')
         return response
