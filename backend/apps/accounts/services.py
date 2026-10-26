@@ -41,5 +41,5 @@ def blacklist_refresh_token(refresh_token:str):
         token = RefreshToken(refresh_token)
         token.blacklist()
         return True
-    except TokenError as exc:
+    except TokenError:
         raise AuthenticationFailed('Invalid token')
