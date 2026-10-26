@@ -51,6 +51,7 @@ class Experience(models.Model):
     portfolio = models.ForeignKey(Portfolio, related_name='experience', on_delete=models.CASCADE)
     company = models.CharField(max_length=150)
     role = models.CharField(max_length=150)
+    location = models.CharField(max_length=150, blank=True)
     start_date = models.CharField(max_length=30, blank=True)
     end_date = models.CharField(max_length=30, blank=True)
     description = models.TextField(blank=True)

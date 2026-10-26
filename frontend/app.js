@@ -14,8 +14,22 @@ function csrfToken() {
 
 async function ensureCsrfToken() {
   if (csrfToken()) return;
-  const response = await fetch(apiUrl("accounts/csrf/"), { credentials: "include" });
+  const response = await fetchApi("accounts/csrf/");
   if (!response.ok || !csrfToken()) throw new Error("Could not start a secure session. Check the backend API.");
+}
+
+async function fetchApi(path, options = {}) {
+  try {
+    return await fetch(apiUrl(path), {
+      ...options,
+      credentials: "include",
+    });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(`Cannot connect to the API at ${API_BASE}. Confirm the backend is running and allows requests from ${location.origin}.`);
+    }
+    throw error;
+  }
 }
 
 async function apiRequest(path, options = {}) {
@@ -30,10 +44,9 @@ async function apiRequest(path, options = {}) {
     const token = csrfToken();
     if (token) headers.set("X-CSRFToken", decodeURIComponent(token));
   }
-  const response = await fetch(apiUrl(path), {
+  const response = await fetchApi(path, {
     ...options,
     headers,
-    credentials: "include",
   });
   const contentType = response.headers.get("content-type") || "";
   const payload = [204, 205].includes(response.status)
@@ -438,14 +451,15 @@ function addRepeatItem(container, kind) {
   fields.className = "form-grid";
   item.append(heading);
   definitions[kind].forEach(([label, name, required, multiline]) => {
-    const field = inputField(label, name, { required, multiline, full: multiline });
+    const field = inputField(label, name, { multiline, full: multiline });
     const control = field.querySelector("input, textarea");
+    if (required) control.dataset.required = "true";
     if (kind === "skills" && name === "level") {
       control.type = "number";
       control.min = "1";
       control.max = "5";
       control.value = "3";
-      control.required = true;
+      control.dataset.required = "true";
     }
     if (name === "link") control.type = "url";
     fields.append(field);
@@ -547,14 +561,21 @@ function setupPortfolioForm() {
       ["experience", "education", "skills", "projects"].forEach((kind) => {
         const keys = [...new Set([...form.querySelectorAll(`[data-repeat="${kind}"] input, [data-repeat="${kind}"] textarea`)].map((control) => control.name))];
         const items = [...form.querySelectorAll(`[data-repeat="${kind}"] .repeat-item`)];
-        items.forEach((item, index) => {
-          const hasContent = keys.some((key) => item.querySelector(`[name="${key}"]`)?.value.trim());
-          if (!hasContent) return;
-          keys.forEach((key) => {
-            const control = item.querySelector(`[name="${key}"]`);
-            if (control?.value.trim()) body.append(`${kind}[${index}]${key}`, control.value.trim());
-          });
+        const values = items.flatMap((item) => {
+          const entry = Object.fromEntries(keys.map((key) => [
+            key,
+            item.querySelector(`[name="${key}"]`)?.value.trim() || "",
+          ]));
+          if (!Object.entries(entry).some(([key, value]) => key !== "level" && value)) return [];
+          const missing = [...item.querySelectorAll("[data-required='true']")]
+            .filter((control) => !control.value.trim())
+            .map((control) => control.name);
+          if (missing.length) {
+            throw new Error(`Complete the required fields for this ${kind} item: ${missing.join(", ")}.`);
+          }
+          return [entry];
         });
+        body.append(kind, JSON.stringify(values));
       });
       const portfolio = await apiRequest("portfolio/", { method: "POST", body });
       if (portfolio.is_public && portfolio.slug) {
@@ -635,25 +656,17 @@ function renderProfile(portfolio) {
   paper.querySelector(".profile-heading .profile-role").textContent = escapeText(portfolio.job_title);
   const contact = paper.querySelector(".profile-contact");
   contact.replaceChildren();
-  [portfolio.location, portfolio.email, portfolio.phone].filter(Boolean).forEach((value, index, values) => {
+  [portfolio.location, portfolio.email, portfolio.phone].filter(Boolean).forEach((value, index) => {
     if (index) contact.append(document.createTextNode("  |  "));
-    contact.append(document.createTextNode(escapeText(value)));
+    if (value !== portfolio.email) {
+      contact.append(document.createTextNode(escapeText(value)));
+      return;
+    }
+    const link = document.createElement("a");
+    link.href = `mailto:${encodeURIComponent(value)}`;
+    link.textContent = value;
+    contact.append(link);
   });
-  if (portfolio.email) {
-    contact.replaceChildren();
-    const values = [portfolio.location, portfolio.email, portfolio.phone].filter(Boolean);
-    values.forEach((value, index) => {
-      if (index) contact.append(document.createTextNode("  |  "));
-      if (value === portfolio.email) {
-        const link = document.createElement("a");
-        link.href = `mailto:${encodeURIComponent(value)}`;
-        link.textContent = value;
-        contact.append(link);
-      } else {
-        contact.append(document.createTextNode(escapeText(value)));
-      }
-    });
-  }
   const github = safeExternalUrl(portfolio.github);
   if (github) {
     if (contact.childNodes.length) contact.append(document.createTextNode("  |  "));

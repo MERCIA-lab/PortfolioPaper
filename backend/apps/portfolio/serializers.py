@@ -1,3 +1,5 @@
+import json
+
 from rest_framework import serializers
 
 from .models import Education, Experience, Portfolio, Project, Skill
@@ -12,7 +14,7 @@ class EducationSerializer(serializers.ModelSerializer):
 class ExperienceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Experience
-        fields = ['id', 'company', 'role', 'start_date', 'end_date', 'description']
+        fields = ['id', 'company', 'role', 'location', 'start_date', 'end_date', 'description']
 
 
 class SkillSerializer(serializers.ModelSerializer):
@@ -67,6 +69,19 @@ class PortfolioWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Portfolio
         fields = ['full_name', 'job_title', 'summary', 'phone', 'email', 'location', 'github', 'github_summary', 'photo', 'is_public', 'education', 'experience', 'skills', 'projects']
+
+    def to_internal_value(self, data):
+        normalized_data = dict(data.items()) if hasattr(data, 'items') else data
+        for field_name in ('education', 'experience', 'skills', 'projects'):
+            value = normalized_data.get(field_name)
+            if isinstance(value, str):
+                try:
+                    normalized_data[field_name] = json.loads(value)
+                except json.JSONDecodeError as exc:
+                    raise serializers.ValidationError({
+                        field_name: 'Enter a valid JSON array.'
+                    }) from exc
+        return super().to_internal_value(normalized_data)
 
     def update(self, instance, validated_data):
         nested_fields = ['education', 'experience', 'skills', 'projects']

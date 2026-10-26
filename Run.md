@@ -49,7 +49,9 @@ py -m http.server 5500
 
 Open <http://localhost:5500/> in your browser. Use the site navigation to register or sign in, create a portfolio, and explore the public directory.
 
-The frontend's API address is set to `http://localhost:8000/api` in `frontend/config.js`. The development backend is configured to accept requests from the frontend's local port, so keep the default ports unless you also update the frontend API address and backend CORS settings.
+The frontend calls the Django REST API directly from the browser using `fetch` with credentials, so keep both servers running. `frontend/config.js` builds the API address from the page hostname and port `8000`. The development backend allows the frontend origins `http://localhost:5500` and `http://127.0.0.1:5500`; keep the default ports or update the API address and backend CORS settings together.
+
+The API root at <http://localhost:8000/api/> lists the routes. Account registration and sign-in use `/api/accounts/register/` and `/api/accounts/login/`; the portfolio editor reads and writes `/api/portfolio/`; public portfolios are read from `/api/directory/` and `/api/directory/<slug>/`. The editor sends repeatable experience, education, skills, and project data as JSON arrays in its multipart request, alongside an optional photo upload.
 
 ## Start both services in VS Code
 
